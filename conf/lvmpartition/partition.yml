@@ -1,0 +1,21 @@
+- hosts: localhost
+  tasks:
+          - name: create a new partition
+            parted:
+                    device: /dev/sdb
+                    number: 1
+                    state: present
+                    part_end: 2GiB
+          - name: formating a partition
+            filesystem:
+                    dev: /dev/sdb1
+                    fstype: ext4
+          - name: creating directory
+            file:
+                    path: /fold2
+                    state: directory
+          - name: mounting
+            mount:
+                    src: /dev/sdb1
+                    path: /fold2
+                    state: mounted

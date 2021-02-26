@@ -1,0 +1,18 @@
+- hosts: "{{ hostname }}"
+  tasks:
+          - name: setting yum repo
+            yum_repository:
+                    description: "docker repo"
+                    name: docker
+                    baseurl: "https://download.docker.com/linux/centos/7/x86_64/stable"
+                    gpgcheck: no
+          - name: install docker
+            command: "yum install docker-ce --nobest -y"
+          - name: install docker SDK
+            pip:
+                    name: docker
+          - name: starting docker service
+            service:
+                    name: docker
+                    state: started
+                    enabled: yes                                                                                                                                                     

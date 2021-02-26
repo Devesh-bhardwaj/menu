@@ -1,0 +1,59 @@
+- hosts: "{{ hostname }}"
+  vars:
+          - doc_root: "{{ docroot }}"
+          - port_no: "{{ portno }}"
+  tasks:
+          - name: "creating dvd folder to mount cdrom"
+            file:
+                    path: "/dvd"
+                    state: directory
+          - name: "mounting cdrom"
+            mount:
+                    src: /dev/cdrom
+                    path: /dvd
+                    state: mounted
+                    fstype: iso9660
+          - name: "yum configuration AppStream Repo"
+            yum_repository:
+                    baseurl: /dvd/AppStream
+                    name: "App"
+                    description: "AppStream Repo"
+                    gpgcheck: no
+          - name: "yum configuration BaseOS Repo"
+            yum_repository:
+                    baseurl: "/dvd/BaseOS"
+                    name: "Base"
+                    description: "BaseOS Repo"
+                    gpgcheck: no
+          - name: "install httpd"
+            package:
+                    name: "httpd"
+                    state: present
+          - name: "install php"
+            package:
+                    name: "php"
+                    state: present
+          - name: "create document root"
+            file:
+                    path: "{{ doc_root }}"
+                    state: directory
+            when: doc_root != "/var/www/html"
+
+          - name: "copy content to document root"
+            copy:
+                    src: "/root/menu/conf/webcontent/index.php"
+                    dest: "{{ doc_root }}"
+          - name: "configuring conf file of httpd webserver"
+            template:
+                    src: "/root/menu/conf/web/webserver.conf"
+                    dest: "/etc/httpd/conf.d/webserver.conf"
+            when: doc_root != "/var/www/html" and port_no != 80
+          - name: "start httpd service"
+            service:
+                    name: "httpd"
+                    state: restarted
+          - name: "stopping firewall-configure later"
+            command: "systemctl stop firewalld"
+          - name: "disabling selinux"
+            selinux:
+                    state: disabled

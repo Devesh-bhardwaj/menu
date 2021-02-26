@@ -1,0 +1,24 @@
+- hosts: "{{ hostname }}"
+  tasks:
+          - name: "creating dvd folder to mount cdrom"
+            file:
+                    path: "/dvd"
+                    state: directory
+          - name: "mounting cdrom"
+            mount:
+                    src: "/dev/cdrom"
+                    path: "/dvd"
+                    state: mounted
+                    fstype: "iso9660"
+          - name: "yum configuration AppStream Repo"
+            yum_repository:
+                    baseurl: "/dvd/AppStream"
+                    name: "App"
+                    description: "AppStream Repo"
+                    gpgcheck: no
+          - name: "yum configuration BaseOS Repo"
+            yum_repository:
+                    baseurl: "/dvd/BaseOS"
+                    name: "Base"
+                    description: "BaseOS Repo"
+                    gpgcheck: no                                                                                                                                                          

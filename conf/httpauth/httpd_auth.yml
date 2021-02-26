@@ -1,0 +1,60 @@
+# While running --> provide --extra-vars "username=tirth password=redhat"
+- hosts: "{{ hostname }}"
+  tasks:
+          - name: creating folder /dvd
+            file:
+                    path: /dvd
+                    state: directory
+          - name: mount dvd
+            mount:
+                    src: /dev/cdrom
+                    path: /dvd
+                    fstype: iso9660
+                    state: mounted
+          - name: creating app repo
+            yum_repository:
+                    name: "{{ item.name }}"
+                    description: "{{ item.desc }}"
+                    baseurl: "{{ item.path }}"
+                    gpgcheck: no
+            ignore_errors: yes
+            with_items:
+                    - {name: "app", desc: "AppStream Repo", path: "file:///dvd/AppStream"}
+                    - {name: "base", desc: "BaseOS Repo", path: "file:///dvd/BaseOS"}
+          - name: install httpd
+            package:
+                    name: httpd
+                    state: present
+          - name: install php
+            package:
+                    name: php
+                    state: present
+          - name: copying content
+            copy:
+                    src: /root/menu/conf/webcontent/index.php
+                    dest: /var/www/html/
+          - name: configure httpd.conf file for Authorization
+            replace:
+                    path: /etc/httpd/conf/httpd.conf
+                    regexp: "AllowOverride None"
+                    replace: "AllowOverride AuthConfig"
+          - name: copying .htaccess file
+            copy:
+                    src: .htaccess
+                    dest: /var/www/html/.htaccess
+          - name: install pip3
+            package:
+                    name: python36
+          - name: installing passlib
+            pip:
+                    name: passlib
+                    state: present
+          - name: creating db for users for auth
+            htpasswd:
+                    path: /etc/www.passwd
+                    name: "{{ username }}"
+                    password: "{{ password }}"
+          - name: starting service
+            service:
+                    name: httpd
+                    state: restarted
